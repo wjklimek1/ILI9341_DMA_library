@@ -31,18 +31,6 @@
 //
 //	Library is written for STM32 HAL library and supports STM32CUBEMX. To use the library with Cube software
 //	you need to tick the box that generates peripheral initialization code in their own respective .c and .h file
-//
-//
-//-----------------------------------
-//	How to use this library
-//-----------------------------------
-//
-//	-If using MCUs other than STM32F7 you will have to change the #include "stm32f7xx_hal.h" in the ILI9341_GFX.h to your respective .h file
-//
-//	If using "ILI9341_STM32_Driver" then all other prequisites to use the library have allready been met
-//	Simply include the library and it is ready to be used
-//
-//-----------------------------------
 
 
 #include "ILI9341_DMA_driver.h"
@@ -312,9 +300,20 @@ void ILI9341_Draw_TextFont(const char* Text, uint16_t X, uint16_t Y, uint16_t Co
     }
 }
 
-/*Draws a full screen picture from flash. Image converted from RGB .jpeg/other to C array using online converter*/
-//USING CONVERTER: http://www.digole.com/tools/PicturetoC_Hex_converter.php
-//65K colour (2Bytes / Pixel)
+/*
+ * \brief Write bitmap of specified size to specified location on screen.
+ *
+ * Bitmap is uint16_t array, where one value corresponds to one pixel. However, display expects to receive low byte first
+ * and MCU sends high byte first. For effective DMA utilization bitmaps have bytes reversed. Using online bitmaps converters
+ * will result in reversed colors.
+ *
+ * \param[in] *Image_Array Pointer to image array
+ * \param[in] X desired X location of top left corner of bitmap on screen
+ * \param[in] Y desired Y location of top left corner of bitmap on screen
+ * \param[in] Size_X Width of image
+ * \param[in] Size_Y Height of image
+
+ */
 void ILI9341_Draw_Image(const uint8_t *Image_Array, uint16_t X, uint16_t Y, uint16_t Size_X, uint16_t Size_Y)
 {
 	if ((X >= LCD_WIDTH) || (Y >= LCD_HEIGHT))
@@ -353,6 +352,7 @@ void ILI9341_Draw_Image(const uint8_t *Image_Array, uint16_t X, uint16_t Y, uint
 
 /*Draws a character from specified AdafruitGFX font*/
 //Adafruit fonts seem to be 2x slower than original built-in font
+//Fonts with scale bigger than 1 are even slower.
 
 void ILI9341_Draw_CharFont(unsigned char c, int16_t x, int16_t y, uint16_t color, uint16_t bg, uint8_t size_x, uint8_t size_y)
 {

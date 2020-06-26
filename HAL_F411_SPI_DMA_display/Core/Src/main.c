@@ -31,11 +31,16 @@
 #include <stdio.h>
 #include "./ILI9341_DMA_library/ILI9341_DMA_driver.h"
 #include "./ILI9341_DMA_library/ILI9341_GFX.h"
-#include "./ILI9341_DMA_library/bitmaps.h"
 
 //include Adafruit fonts
-#include "./ILI9341_DMA_library/FreeMono12pt7b.h"
-#include "./ILI9341_DMA_library/FreeSerifBold24pt7b.h"
+#include "./ILI9341_DMA_library/fonts/FreeMono12pt7b.h"
+#include "./ILI9341_DMA_library/fonts/FreeSerifBold24pt7b.h"
+
+//include bitmaps
+#include "ILI9341_DMA_library/bitmaps/palette.h"
+#include "ILI9341_DMA_library/bitmaps/settings_active.h"
+#include "ILI9341_DMA_library/bitmaps/telemetry_active.h"
+#include "ILI9341_DMA_library/bitmaps/calibration_active.h"
 
 /* USER CODE END Includes */
 
@@ -56,7 +61,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-volatile uint8_t SPI2_TX_completed_flag = 1;
+volatile uint8_t SPI2_TX_completed_flag = 1;    //flag indicating finish of SPI transmission
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -75,7 +80,7 @@ int _write(int file, char *ptr, int len)
 	return len;
 }
 
-//SPI tranmission finished interrupt callback
+//SPI transmission finished interrupt callback
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 {
 	SPI2_TX_completed_flag = 1;
@@ -137,7 +142,6 @@ int main(void)
 			}
 		}
 
-		//20.000 per second!
 		HAL_TIM_Base_Stop(&htim1);
 		Timer_Counter += __HAL_TIM_GET_COUNTER(&htim1);
 		__HAL_TIM_SET_COUNTER(&htim1, 0);
@@ -168,34 +172,17 @@ int main(void)
 		HAL_Delay(5000);
 
 
-		//----------------------------------------------------------COUNTING SINGLE SEGMENT
-		char Temp_Buffer_text[40];
-		ILI9341_Fill_Screen(WHITE);
-		ILI9341_Set_Rotation(SCREEN_HORIZONTAL_2);
-		ILI9341_Draw_Text("Counting single segment", 10, 10, BLACK, 1, WHITE);
-		HAL_Delay(2000);
-		ILI9341_Fill_Screen(WHITE);
-
-		for(uint16_t i = 0; i <= 100; i++)
-			{
-				sprintf(Temp_Buffer_text, "Counting: %d", i);
-				ILI9341_Draw_Text(Temp_Buffer_text, 10, 10, BLACK, 3, WHITE);
-			}
-
-		HAL_Delay(1000);
-
-
 		//--------------------------------------------------------- DRAW FULL SCREEN BITMAP
 		ILI9341_Draw_Image((uint8_t*)palette, 0, 0, 320, 240);
+		HAL_Delay(5000);
 
 		//--------------------------------------------------------- DRAW SMALL BITMAPS
-		ILI9341_Draw_Image((uint8_t*)palette, 0, 0, 320, 240);
-		HAL_Delay(3000);
+
 		ILI9341_Fill_Screen(BLACK);
-		ILI9341_Draw_Image((uint8_t*)dot, 0, 0, 10, 10);
-		ILI9341_Draw_Image((uint8_t*)dot, 10, 10, 10, 10);
-		ILI9341_Draw_Image((uint8_t*)dot, 20, 20, 10, 10);
-		ILI9341_Draw_Image((uint8_t*)dot, 30, 30, 10, 10);
+		ILI9341_Draw_Image((uint8_t*)calibration_active, 0, 0, 45, 45);
+		ILI9341_Draw_Image((uint8_t*)settings_active, 45, 45, 45, 45);
+		ILI9341_Draw_Image((uint8_t*)telemetry_active, 90, 90, 45, 45);
+		HAL_Delay(5000);
 
 		//--------------------------------------------------------- DRAW SOME TEXT WITH ADAFRUIT FONT
 		ILI9341_Fill_Screen(BLACK);

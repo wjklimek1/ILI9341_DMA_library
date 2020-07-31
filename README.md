@@ -3,11 +3,17 @@ Library for ILI9341 SPI display for STM32F411 utilizing DMA for SPI data transfe
 
 Based on https://github.com/martnak/STM32-ILI9341. 
  
-Library is at early stage of development, so you may encounter many bugs and strange bahaviours. Project was created in CubeIDE for Nucleo F411RE. I have no idea if it will work for other MCUs. DMA allows to raise SPI utilization to 93.57% from about 60% without DMA. However, im not sure if original benchmark gives me reliable results. 
+Library is at a stage of development, so you may encounter bugs and unexpected bahaviours.  Project was created in CubeIDE for Nucleo F411RE, but it should be easy to port it for other STM32 microcontrollers. DMA allows to raise SPI utilization to 93.57% from about 60% without DMA. Library is compatible with AdafruitGFX fonts.
 
 Worth to know:
-* AdafruitGFX fonts are 2x slower than original font
+* AdafruitGFX fonts were optimized, but they are still slightly slower than original font. 
 * Bitmaps are sent to DMA with high byte first, but display expects low byte first. Sample bitmap "palette" has bytes reversed.
-* Background color is ignored when using AdafruitGFX fonts
-* DMA is used, but you have to wait for the end of transmission to leave local function
+* AdafruitGFX fonts now accept background color, but because of different width of characters not everything may be overwritten. Simplest workaround is to place blank characer like space at the end of each string.
+* DMA is used, but you have to wait for the end of transmission to leave library function. Whole operation is still much faster than without DMA.
 
+Changes since last version:
+* Optimized AdafruitGFX fonts - drawing time of sample string dropped from 32ms to just 1.8ms
+* AdafruitGFX fonts now accept background color 
+* AdafruitGFX fonts ignore size parameter. (It was broken anyway, i may add this feture in the future)
+
+Any suggestions and bug reports are greatly aprreciated.

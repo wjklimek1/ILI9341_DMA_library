@@ -32,6 +32,8 @@
 //	Library is written for STM32 HAL library and supports STM32CUBEMX. To use the library with Cube software
 //	you need to tick the box that generates peripheral initialization code in their own respective .c and .h file
 
+#include <stdlib.h>
+#include <string.h>
 
 #include "ILI9341_DMA_driver.h"
 #include "ILI9341_GFX.h"
@@ -63,6 +65,12 @@ GFXglyph *pgm_read_glyph_ptr(const GFXfont *gfxFont, uint8_t c)
 uint8_t *pgm_read_bitmap_ptr(const GFXfont *gfxFont)
 {
   return gfxFont->bitmap;
+}
+
+uint16_t byte_reverse(uint16_t in_color)
+{
+    uint16_t out_color = (in_color << 8) | (in_color >> 8);
+    return out_color;
 }
 
 /*Draw hollow circle at X,Y location with specified radius and colour. X and Y represent circles center */
@@ -290,6 +298,95 @@ void ILI9341_Draw_Text(const char* Text, uint16_t X, uint16_t Y, uint16_t Colour
     }
 }
 
+/*Draws a character from specified AdafruitGFX font*/
+//Adafruit fonts seem to be 2x slower than original built-in font
+//Fonts with scale bigger than 1 are even slower.
+
+void ILI9341_Draw_CharFont(unsigned char c, int16_t x, int16_t y, uint16_t color, uint16_t background, uint8_t size_x, uint8_t size_y)
+{
+	if(gfxFont == NULL)
+		return;
+    // Character is assumed previously filtered by write() to eliminate
+    // newlines, returns, non-printable characters, etc.  Calling
+    // drawChar() directly with 'bad' characters of font may cause mayhem!
+
+    c -= (uint8_t)pgm_read_byte(&gfxFont->first);      //convert input char to corresponding byte from font array
+    GFXglyph *glyph = pgm_read_glyph_ptr(gfxFont, c);  //get pointer of glyph corresponding to char
+    uint8_t *bitmap = pgm_read_bitmap_ptr(gfxFont);    //get pointer of char bitmap
+
+    background = byte_reverse(background);
+
+    uint16_t bo = pgm_read_word(&glyph->bitmapOffset);
+    uint8_t width = pgm_read_byte(&glyph->width);
+    uint8_t height = pgm_read_byte(&glyph->height);
+
+    int8_t x_offset = pgm_read_byte(&glyph->xOffset),
+           y_offset = pgm_read_byte(&glyph->yOffset);
+
+    uint16_t *tmp_char_bitmap = malloc(2*width*height);   //allocate dynamic array for bitmap
+    //set bitmap background color
+//    for(int i = 0; i < width*height; i++)
+//    {
+//    	tmp_char_bitmap[i] = background;
+//    }
+
+    //mask background with font color
+    uint8_t bit = 0;
+    uint8_t bits = 0;
+    uint8_t y_pos = 0;
+    uint8_t x_pos = 0;
+
+    for(y_pos = 0; y_pos < height; y_pos++)
+    {
+    	for(x_pos = 0; x_pos < width; x_pos++)
+    	{
+			if (!(bit++ & 7))
+			{
+				bits = pgm_read_byte(&bitmap[bo++]);
+			}
+			if (bits & 0x80)
+			{
+				tmp_char_bitmap[y_pos*width+x_pos] = color;
+			}
+			else
+			{
+				tmp_char_bitmap[y_pos*width+x_pos] = background;
+			}
+			bits <<= 1;
+    	}
+    }
+    ILI9341_Draw_Image((uint8_t*)tmp_char_bitmap, x, y+y_offset, width, height);       //draw character as a bitmap
+    free(tmp_char_bitmap);                                                             //free allocated memory
+    /*
+    uint8_t xx, yy, bits = 0, bit = 0;
+    int16_t xo16 = 0, yo16 = 0;
+
+    if (size_x > 1 || size_y > 1)
+    {
+      xo16 = xo;
+      yo16 = yo;
+    }
+
+    for (yy = 0; yy < h; yy++)
+    {
+      for (xx = 0; xx < w; xx++)
+      {
+        if (!(bit++ & 7))
+        {
+          bits = pgm_read_byte(&bitmap[bo++]);
+        }
+        if (bits & 0x80)
+        {
+            ILI9341_Draw_Pixel(x + xo + xx, y + yo + yy, color);
+        }
+        bits <<= 1;
+      }
+    }
+    */
+
+}
+
+
 void ILI9341_Draw_TextFont(const char* Text, uint16_t X, uint16_t Y, uint16_t Colour, uint16_t Size, uint16_t Background_Colour)
 {
     while (*Text)
@@ -350,59 +447,4 @@ void ILI9341_Draw_Image(const uint8_t *Image_Array, uint16_t X, uint16_t Y, uint
 
 }
 
-/*Draws a character from specified AdafruitGFX font*/
-//Adafruit fonts seem to be 2x slower than original built-in font
-//Fonts with scale bigger than 1 are even slower.
 
-void ILI9341_Draw_CharFont(unsigned char c, int16_t x, int16_t y, uint16_t color, uint16_t bg, uint8_t size_x, uint8_t size_y)
-{
-	if(gfxFont == NULL)
-		return;
-    // Character is assumed previously filtered by write() to eliminate
-    // newlines, returns, non-printable characters, etc.  Calling
-    // drawChar() directly with 'bad' characters of font may cause mayhem!
-
-    c -= (uint8_t)pgm_read_byte(&gfxFont->first);
-    GFXglyph *glyph = pgm_read_glyph_ptr(gfxFont, c);
-    uint8_t *bitmap = pgm_read_bitmap_ptr(gfxFont);
-
-    uint16_t bo = pgm_read_word(&glyph->bitmapOffset);
-    uint8_t w = pgm_read_byte(&glyph->width), h = pgm_read_byte(&glyph->height);
-    int8_t xo = pgm_read_byte(&glyph->xOffset),
-           yo = pgm_read_byte(&glyph->yOffset);
-    uint8_t xx, yy, bits = 0, bit = 0;
-    int16_t xo16 = 0, yo16 = 0;
-
-    if (size_x > 1 || size_y > 1)
-    {
-      xo16 = xo;
-      yo16 = yo;
-    }
-
-    for (yy = 0; yy < h; yy++)
-    {
-      for (xx = 0; xx < w; xx++)
-      {
-        if (!(bit++ & 7))
-        {
-          bits = pgm_read_byte(&bitmap[bo++]);
-        }
-        if (bits & 0x80) {
-          if (size_x == 1 && size_y == 1)
-          {
-            ILI9341_Draw_Pixel(x + xo + xx, y + yo + yy, color);
-          }
-          else
-          {
-        	  ILI9341_Draw_Rectangle(
-        			  x + (xo16 + xx) * size_x,
-					  y + (yo16 + yy) * size_y,
-					  size_x,
-					  size_y,
-					  color);
-          }
-        }
-        bits <<= 1;
-      }
-    }
-}

@@ -51,11 +51,8 @@
 extern uint8_t SPI2_TX_completed_flag;
 
 const GFXfont *gfxFont = NULL;
-
-void set_adafruit_font(const GFXfont *font_pointer)
-{
-	gfxFont = font_pointer;
-}
+int32_t max_font_height;
+int32_t min_font_height;
 
 GFXglyph *pgm_read_glyph_ptr(const GFXfont *gfxFont, uint8_t c)
 {
@@ -71,6 +68,28 @@ uint16_t byte_reverse(uint16_t in_color)
 {
     uint16_t out_color = (in_color << 8) | (in_color >> 8);
     return out_color;
+}
+
+void ILI9341_set_adafruit_font(const GFXfont *font_pointer)
+{
+	gfxFont = font_pointer;
+
+	int32_t min_y = -9999;
+	int32_t max_y = 9999;
+
+    for(int i = 0; i < 95; i++)
+    {
+        //find the highest pixel in font
+        if(gfxFont->glyph[i].yOffset < max_y)
+        	max_y = gfxFont->glyph[i].yOffset;
+
+        //find the lowest pixel in font
+        if(gfxFont->glyph[i].height + gfxFont->glyph[i].yOffset > min_y)
+            min_y = gfxFont->glyph[i].height + gfxFont->glyph[i].yOffset;
+    }
+    max_font_height = min_y;
+    min_font_height = max_y;
+
 }
 
 /*Draw hollow circle at X,Y location with specified radius and colour. X and Y represent circles center */
@@ -320,17 +339,12 @@ void ILI9341_Draw_CharFont(unsigned char c, int16_t x, int16_t y, uint16_t color
     uint8_t width = pgm_read_byte(&glyph->width);
     uint8_t height = pgm_read_byte(&glyph->height);
 
-    int8_t x_offset = pgm_read_byte(&glyph->xOffset),
-           y_offset = pgm_read_byte(&glyph->yOffset);
+    //int8_t x_offset = pgm_read_byte(&glyph->xOffset);
+    int8_t y_offset = pgm_read_byte(&glyph->yOffset);
 
     uint16_t *tmp_char_bitmap = malloc(2*width*height);   //allocate dynamic array for bitmap
-    //set bitmap background color
-//    for(int i = 0; i < width*height; i++)
-//    {
-//    	tmp_char_bitmap[i] = background;
-//    }
 
-    //mask background with font color
+    //decide for background color or font color
     uint8_t bit = 0;
     uint8_t bits = 0;
     uint8_t y_pos = 0;
@@ -357,33 +371,57 @@ void ILI9341_Draw_CharFont(unsigned char c, int16_t x, int16_t y, uint16_t color
     }
     ILI9341_Draw_Image((uint8_t*)tmp_char_bitmap, x, y+y_offset, width, height);       //draw character as a bitmap
     free(tmp_char_bitmap);                                                             //free allocated memory
-    /*
-    uint8_t xx, yy, bits = 0, bit = 0;
-    int16_t xo16 = 0, yo16 = 0;
+}
 
-    if (size_x > 1 || size_y > 1)
+
+
+/*
+ * \brief Writes rectangle of maximum dimensions of the text string.
+ *
+ * Finds lowest and highest pixel in a string, then writes a background rectangle that will overlap any pixels
+ * that would mix with the font. Good solution to write text on a bitmap, but not at all to overlap old text string.
+ * For expamle, overwriting "goal" (lowest pixel in 'g', highest in 'l') with "aaaa" (all characters smaller than 'g'
+ * or 'l') will left ramains of lower 'g' part and higher 'l'. To write text on text see ILI9341_Draw_Text_Font_Background().
+ *
+ * \param[in] *Image_Array Pointer to image array
+ * \param[in] X desired X location of low left corner of rectangle
+ * \param[in] Y desired Y location of low left corner of rectangle
+ * \param[in] Size Text size
+ * \param[in] Background_Colour Color of rectangle
+
+ */
+void ILI9341_Draw_Font_Background(const char* Text, uint16_t X, uint16_t Y, uint16_t Size, uint16_t Background_Colour)
+{
+	int32_t length = 0;
+	int32_t min_y = -9999;
+	int32_t max_y = 9999;
+
+    while (*Text)
     {
-      xo16 = xo;
-      yo16 = yo;
-    }
+        length = length + gfxFont->glyph[*Text-32].width  +  gfxFont->glyph[*Text-32].xOffset;
 
-    for (yy = 0; yy < h; yy++)
+        //find the highest pixel in string
+        if(gfxFont->glyph[*Text-32].yOffset < max_y)
+        	max_y = gfxFont->glyph[*Text-32].yOffset;
+
+        //find the lowest pixel in string
+        if(gfxFont->glyph[*Text-32].height + gfxFont->glyph[*Text-32].yOffset > min_y)
+            min_y = gfxFont->glyph[*Text-32].height + gfxFont->glyph[*Text-32].yOffset;
+        Text++;
+    }
+    ILI9341_Draw_Filled_Rectangle_Coord(X, Y+max_y, X+length, Y+min_y, Background_Colour);
+}
+
+void ILI9341_Draw_OnText_Font_Background(const char* Text, uint16_t X, uint16_t Y, uint16_t Size, uint16_t Background_Colour)
+{
+	uint16_t length= 0;
+
+    while (*Text)
     {
-      for (xx = 0; xx < w; xx++)
-      {
-        if (!(bit++ & 7))
-        {
-          bits = pgm_read_byte(&bitmap[bo++]);
-        }
-        if (bits & 0x80)
-        {
-            ILI9341_Draw_Pixel(x + xo + xx, y + yo + yy, color);
-        }
-        bits <<= 1;
-      }
+        length = length + gfxFont->glyph[*Text-32].xAdvance;
+        Text++;
     }
-    */
-
+    ILI9341_Draw_Filled_Rectangle_Coord(X, Y+min_font_height, X+length, Y+max_font_height, Background_Colour);
 }
 
 

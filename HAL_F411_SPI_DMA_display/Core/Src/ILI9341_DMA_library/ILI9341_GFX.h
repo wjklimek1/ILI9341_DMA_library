@@ -61,9 +61,11 @@ typedef struct {
   uint8_t yAdvance; ///< Newline distance (y axis)
 } GFXfont;
 
-void set_adafruit_font(const GFXfont *font_pointer);
+
 GFXglyph *pgm_read_glyph_ptr(const GFXfont *gfxFont, uint8_t c);
 uint8_t *pgm_read_bitmap_ptr(const GFXfont *gfxFont);
+
+void ILI9341_set_adafruit_font(const GFXfont *font_pointer);
 void ILI9341_Draw_Hollow_Circle(uint16_t X, uint16_t Y, uint16_t Radius, uint16_t Colour);
 void ILI9341_Draw_Filled_Circle(uint16_t X, uint16_t Y, uint16_t Radius, uint16_t Colour);
 void ILI9341_Draw_Hollow_Rectangle_Coord(uint16_t X0, uint16_t Y0, uint16_t X1, uint16_t Y1, uint16_t Colour);
@@ -71,6 +73,8 @@ void ILI9341_Draw_Filled_Rectangle_Coord(uint16_t X0, uint16_t Y0, uint16_t X1, 
 void ILI9341_Draw_Char(char Character, uint16_t X, uint16_t Y, uint16_t Colour, uint16_t Size, uint16_t Background_Colour);
 void ILI9341_Draw_Text(const char* Text, uint16_t X, uint16_t Y, uint16_t Colour, uint16_t Size, uint16_t Background_Colour);
 void ILI9341_Draw_TextFont(const char* Text, uint16_t X, uint16_t Y, uint16_t Colour, uint16_t Size, uint16_t Background_Colour);
+void ILI9341_Draw_Font_Background(const char* Text, uint16_t X, uint16_t Y, uint16_t Size, uint16_t Background_Colour);
+void ILI9341_Draw_OnText_Font_Background(const char* Text, uint16_t X, uint16_t Y, uint16_t Size, uint16_t Background_Colour);
 void ILI9341_Draw_Filled_Rectangle_Size_Text(uint16_t X0, uint16_t Y0, uint16_t Size_X, uint16_t Size_Y, uint16_t Colour);
 
 //USING CONVERTER: http://www.digole.com/tools/PicturetoC_Hex_converter.php

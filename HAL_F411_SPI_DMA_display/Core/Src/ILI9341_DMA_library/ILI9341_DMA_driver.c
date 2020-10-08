@@ -321,12 +321,12 @@ void ILI9341_Draw_Colour_Burst(uint16_t Colour, uint32_t Size)
 	HAL_GPIO_WritePin(LCD_DC_PORT, LCD_DC_PIN, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GPIO_PIN_RESET);
 
-	unsigned char chifted = Colour >> 8;
+	unsigned char MSB_color = Colour >> 8;
 
 	unsigned char burst_buffer[Buffer_Size];
 	for (uint32_t j = 0; j < Buffer_Size; j += 2)
 	{
-		burst_buffer[j] = chifted;
+		burst_buffer[j] = MSB_color;
 		burst_buffer[j + 1] = Colour;
 	}
 

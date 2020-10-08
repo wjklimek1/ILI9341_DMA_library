@@ -469,17 +469,17 @@ void ILI9341_Draw_Image(const uint8_t *Image_Array, uint16_t X, uint16_t Y, uint
 
 
 	int x;
-	for(x = 0; x < Size/3200; x++)
+	for(x = 0; x < Size/0xFFFF; x++)
 	{
 		SPI2_TX_completed_flag = 0;
-		HAL_SPI_Transmit_DMA(HSPI_INSTANCE, (unsigned char*) (Image_Array+(x*3200)), 3200);
+		HAL_SPI_Transmit_DMA(HSPI_INSTANCE, (unsigned char*) (Image_Array+(x*0xFFFF)), 0xFFFF);
 		while (SPI2_TX_completed_flag == 0);
 	}
 
-	if(Size % 3200 > 0)
+	if(Size % 0xFFFF > 0)
 	{
 		SPI2_TX_completed_flag = 0;
-		HAL_SPI_Transmit_DMA(HSPI_INSTANCE, (unsigned char*) (Image_Array+(x*3200)), Size % 3200);
+		HAL_SPI_Transmit_DMA(HSPI_INSTANCE, (unsigned char*) (Image_Array+(x*0xFFFF)), Size % 0xFFFF);
 		while (SPI2_TX_completed_flag == 0);
 	}
 

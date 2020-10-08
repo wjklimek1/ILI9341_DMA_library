@@ -10,10 +10,6 @@ Worth to know:
 * Bitmaps are sent to DMA with high byte first, but display expects low byte first. Sample bitmap "palette" has bytes reversed.
 * AdafruitGFX fonts now accept background color, but because of different width of characters not everything may be overwritten. Simplest workaround is to place blank characer like space at the end of each string.
 * DMA is used, but you have to wait for the end of transmission to leave library function. Whole operation is still much faster than without DMA.
-
-Changes since last version:
-* Optimized AdafruitGFX fonts - drawing time of sample string dropped from 32ms to just 1.8ms
-* AdafruitGFX fonts now accept background color 
-* AdafruitGFX fonts ignore size parameter. (It was broken anyway, i may add this feture in the future)
+* AdafruitGFX fonts drawing uses dynamic memory allocation (malloc) and is not thread safe. If you want to use FreeRTOS with this library you have to change "malloc" to "pvPortMalloc()" and "free" to "vPortFree".
 
 Any suggestions and bug reports are greatly aprreciated.

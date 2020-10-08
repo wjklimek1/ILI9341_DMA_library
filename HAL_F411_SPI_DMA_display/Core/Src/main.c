@@ -186,14 +186,14 @@ int main(void)
 
 		//--------------------------------------------------------- DRAW SOME TEXT WITH ADAFRUIT FONT
 		ILI9341_Fill_Screen(BLACK);
-		set_adafruit_font(&FreeSerifBold24pt7b);
+		ILI9341_set_adafruit_font(&FreeSerifBold24pt7b);
 		ILI9341_Draw_TextFont("J.R.R. Tolkien", 10, 40, YELLOW, 1, BLACK);
 		ILI9341_Draw_TextFont("\"The Hobbit\"", 15, 100, YELLOW, 1, BLACK);
 
 		HAL_Delay(3000);
 		//--------------------------------------------------------- DRAW SOME TEXT WITH ADAFRUIT FONT
 		ILI9341_Fill_Screen(BLACK);
-		set_adafruit_font(&FreeMono12pt7b);
+		ILI9341_set_adafruit_font(&FreeMono12pt7b);
 
 		ILI9341_Draw_TextFont("In a hole in the ground", 0, 20, YELLOW, 1, BLACK);
 		ILI9341_Draw_TextFont("there lived a hobbit.", 0, 40, YELLOW, 1, BLACK);
